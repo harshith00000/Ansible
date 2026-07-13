@@ -1,0 +1,28 @@
+---
+- name: Deploy Rapido Web App
+  hosts: worker
+  become: yes
+
+  tasks:
+
+    - name: Create application directory
+      file:
+        path: /opt/rapido-app
+        state: directory
+
+    - name: Copy project files to worker
+      copy:
+        src: ./
+        dest: /opt/rapido-app/
+
+    - name: Stop old container
+      shell: docker stop rapido-container || true
+
+    - name: Remove old container
+      shell: docker rm rapido-container || true
+
+    - name: Build Docker image
+      shell: docker build -t rapido-webapp:latest /opt/rapido-app
+
+    - name: Run Docker container
+      shell: docker run -d --name rapido-container -p 8000:80 rapido-webapp:latest
