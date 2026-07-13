@@ -1,57 +1,35 @@
 pipeline {
-    agent {
-        label 'worker'
-    }
+    agent any
 
     stages {
 
-        stage('Checkout Code') {
+        stage('Checkout') {
             steps {
                 git branch: 'main',
                     url: 'https://github.com/harshith00000/Ansible.git'
             }
         }
 
-        stage('Build WAR') {
+        stage('Build Maven Project') {
             steps {
                 sh 'mvn clean package'
             }
         }
 
-        stage('Build Docker Image') {
+        stage('Deploy with Ansible') {
             steps {
-                sh 'docker build -t rapido-webapp:latest .'
-            }
-        }
-
-        stage('Remove Old Container') {
-            steps {
-                sh '''
-                    docker stop rapido-container || true
-                    docker rm rapido-container || true
-                '''
-            }
-        }
-
-        stage('Deploy Container') {
-            steps {
-                sh '''
-                    docker run -d \
-                    --name rapido-container \
-                    -p 8080:80 \
-                    rapido-webapp:latest
-                '''
+                sh 'ansible-playbook -i inventory.ini deploy.yml'
             }
         }
     }
 
     post {
         success {
-            echo 'Application deployed successfully!'
+            echo 'Application deployed successfully to Worker Server'
         }
 
         failure {
-            echo 'Pipeline failed!'
+            echo 'Deployment failed'
         }
     }
 }
